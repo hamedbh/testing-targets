@@ -59,7 +59,7 @@ tar_pipeline(
     ),
     tar_target(
         gem_elnet_grid,
-        gem_elnet_param %>% grid_regular(levels = c(101, 11))
+        gem_elnet_param %>% grid_regular(levels = c(20, 11))
     ),
     tar_target(
         gem_elnet_tune,

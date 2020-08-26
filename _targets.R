@@ -117,5 +117,55 @@ tar_pipeline(
             metrics = metric_set(roc_auc, pr_auc, gain_capture, mn_log_loss),
             control = control_grid(verbose = TRUE, save_pred = TRUE)
         )
+    ), 
+    tar_target(
+        gem_elnet_best_params, 
+        gem_elnet_tune %>%
+            select_by_pct_loss(desc(penalty),
+                               metric = "roc_auc",
+                               limit = 1)
+    ), 
+    tar_target(
+        gem_mars_best_params, 
+        gem_mars_tune %>%
+            select_by_pct_loss(num_terms,
+                               metric = "roc_auc",
+                               limit = 1)
+    ), 
+    tar_target(
+        gem_elnet_fit, 
+        gem_elnet_wfl %>%
+            finalize_workflow(gem_elnet_best_params) %>%
+            fit(data = training(gem_split))
+    ), 
+    tar_target(
+        gem_mars_fit, 
+        gem_mars_wfl %>%
+            finalize_workflow(gem_mars_best_params) %>%
+            fit(data = training(gem_split))
+    ), 
+    tar_target(
+        gem_elnet_preds, 
+        gem_elnet_tune %>% 
+            collect_predictions() %>% 
+            semi_join(gem_elnet_best_params, 
+                      by = c("penalty", "mixture"))
+    ), 
+    tar_target(
+        gem_elnet_scaled, 
+        gem_elnet_preds %>% 
+            calibrate_prob_model(.pred_ideal, cut)
+    ), 
+    tar_target(
+        gem_mars_preds, 
+        gem_mars_tune %>% 
+            collect_predictions() %>% 
+            semi_join(gem_mars_best_params, 
+                      by = c("num_terms"))
+    ), 
+    tar_target(
+        gem_mars_scaled, 
+        gem_mars_preds %>% 
+            calibrate_prob_model(.pred_ideal, cut)
     )
 )

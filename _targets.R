@@ -153,9 +153,14 @@ tar_pipeline(
                       by = c("penalty", "mixture"))
     ), 
     tar_target(
-        gem_elnet_scaled, 
+        gem_elnet_platt, 
         gem_elnet_preds %>% 
-            calibrate_prob_model(.pred_ideal, cut)
+            calibrate_prob_model(.pred_ideal, cut, method = "platt")
+    ), 
+    tar_target(
+        gem_elnet_iso, 
+        gem_elnet_preds %>% 
+            calibrate_prob_model(.pred_ideal, cut, method = "isotonic")
     ), 
     tar_target(
         gem_mars_preds, 
@@ -165,8 +170,13 @@ tar_pipeline(
                       by = c("num_terms"))
     ), 
     tar_target(
-        gem_mars_scaled, 
+        gem_mars_platt, 
         gem_mars_preds %>% 
-            calibrate_prob_model(.pred_ideal, cut)
+            calibrate_prob_model(.pred_ideal, cut, method = "platt")
+    ), 
+    tar_target(
+        gem_mars_iso, 
+        gem_mars_preds %>% 
+            calibrate_prob_model(.pred_ideal, cut, method = "isotonic")
     )
 )

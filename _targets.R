@@ -119,6 +119,66 @@ tar_pipeline(
             control = control_grid(verbose = TRUE, save_pred = TRUE)
         )
     ), 
+    # build an XGBoost model
+    tar_target(
+        gem_xgb_rec,
+        create_xgb_rec(gem_split)
+    ),
+    tar_target(
+        gem_xgb_mod,
+        boost_tree(
+            mode = "classification",
+            mtry = tune(), 
+            trees = 100L, 
+            tree_depth = tune(), 
+            learn_rate = 0.1, 
+            sample_size = tune()
+        ) %>%
+            set_engine(
+                "xgboost"
+            )
+    ),
+    tar_target(
+        gem_xgb_wfl,
+        workflow() %>% add_recipe(gem_xgb_rec) %>% add_model(gem_xgb_mod)
+    ),
+    tar_target(
+        gem_xgb_param,
+        gem_xgb_wfl %>%
+            parameters() %>%
+            update(
+                tree_depth = tree_depth(range = c(4, 10)), 
+                mtry = mtry(range = 
+                                c(
+                                    round((gem_xgb_rec %>% 
+                                               prep() %>% 
+                                               juice() %>% 
+                                               ncol()) * 0.4), 
+                                    (gem_xgb_rec %>% 
+                                         prep() %>% 
+                                         juice() %>% 
+                                         ncol) - 1L
+                                )), 
+                sample_size = sample_prop(range = c(0.5, 1))
+            )
+    ),
+    tar_target(
+        gem_xgb_grid,
+        gem_xgb_param %>% grid_regular(levels = c(4, 4, 3))
+    ),
+    tar_target(
+        gem_xgb_tune,
+        tune_grid(
+            gem_xgb_wfl,
+            resamples = gem_CV_folds,
+            param_info = gem_xgb_param,
+            grid = gem_xgb_grid,
+            metrics = metric_set(roc_auc, pr_auc, gain_capture, mn_log_loss),
+            control = control_grid(verbose = TRUE, save_pred = TRUE)
+        )
+    ),
+    # pull out the best parameters for each model type, fit a model on the 
+    # training data, and collect predictions made with those parameters
     tar_target(
         gem_elnet_best_params, 
         gem_elnet_tune %>%
@@ -134,6 +194,13 @@ tar_pipeline(
                                limit = 1)
     ), 
     tar_target(
+        gem_xgb_best_params, 
+        gem_xgb_tune %>% 
+            select_by_pct_loss(tree_depth, sample_size, mtry, 
+                               metric = "roc_auc", 
+                               limit = 1)
+    ), 
+    tar_target(
         gem_elnet_fit, 
         gem_elnet_wfl %>%
             finalize_workflow(gem_elnet_best_params) %>%
@@ -143,6 +210,12 @@ tar_pipeline(
         gem_mars_fit, 
         gem_mars_wfl %>%
             finalize_workflow(gem_mars_best_params) %>%
+            fit(data = training(gem_split))
+    ), 
+    tar_target(
+        gem_xgb_fit, 
+        gem_xgb_wfl %>%
+            finalize_workflow(gem_xgb_best_params) %>%
             fit(data = training(gem_split))
     ), 
     tar_target(
@@ -177,6 +250,23 @@ tar_pipeline(
     tar_target(
         gem_mars_iso, 
         gem_mars_preds %>% 
+            calibrate_prob_model(.pred_ideal, cut, method = "isotonic")
+    ), 
+    tar_target(
+        gem_xgb_preds, 
+        gem_xgb_tune %>% 
+            collect_predictions() %>% 
+            semi_join(gem_xgb_best_params, 
+                      by = c("mtry", "sample_size", "tree_depth"))
+    ), 
+    tar_target(
+        gem_xgb_platt, 
+        gem_xgb_preds %>% 
+            calibrate_prob_model(.pred_ideal, cut, method = "platt")
+    ), 
+    tar_target(
+        gem_xgb_iso, 
+        gem_xgb_preds %>% 
             calibrate_prob_model(.pred_ideal, cut, method = "isotonic")
     )
 )

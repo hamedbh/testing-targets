@@ -1,4 +1,5 @@
 library(targets)
+library(tarchetypes)
 # Using a separate packages script seems to work fine, as it did under drake
 source("packages.R")
 purrr::walk(list.files("R", full.names = TRUE), 

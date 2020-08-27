@@ -9,14 +9,81 @@ knitr::opts_chunk$set(
     fig.path = "man/figures/", 
     echo = TRUE
 )
-```
-
-```{r load libraries, include=FALSE}
 library(targets)
 library(tarchetypes)
 # Using a separate packages script seems to work fine, as it did under drake
 source("packages.R")
 purrr::walk(list.files("R", full.names = TRUE), 
             ~ source(.x))
+theme_set(theme_light())
+```
+
+This is an example of predictive modelling using the [`{targets}` package](https://wlandau.github.io/targets/), Will Landau's new package that sort-of replaces [`{drake}`](https://docs.ropensci.org/drake/). I did [something similar with `{drake}` and `{tidymodels}`](https://github.com/hamedbh/test-drake-tidymodels) a while ago, this time with a different dataset and a slightly different selection of models. 
+
+The two main aims here are: 
+
+1. Explore how `{targets}` works, check how it's different. 
+2. Try out probability calibration for the outputs of predictive models, and see how it affects the quality of the probability predictions. 
+
+The problem is binary classification using the `diamonds` dataset from `{ggplot2}`: the `cut` variable is changed to be `ideal` or `other`, and that is the binary outcome to be predicted. 
+
+We can check the balance of the classes in the training data. 
+
+```{r}
+tar_read(gem_split) %>% 
+    training() %>% 
+    count(cut) %>% 
+    mutate(pct = n/sum(n)) %>% 
+    ggplot(aes(cut, pct)) + 
+    geom_col() + 
+    scale_y_continuous(labels = percent) + 
+    labs(
+        title = "Proportion of classes for cut", 
+        x = NULL, 
+        y = NULL
+    ) + 
+    theme(legend.position = "none")
+```
+
+A 60/40 split is ok for modelling purposes, but that imbalance might affect the quality of the probability estimates. We can test this with the probability calibration later on. 
+
+For this report we skip the EDA steps and discussion of the model tuning. All of that can be found in the `_targets.R` file in this repo. 
+
+Let's compare performance for the three model types: Elastic Net Logistic Regression; Multivariate Adaptive Regression Splines; Gradient-boosted Decision Trees (XGBoost). 
+
+```{r model scores plot, warning=FALSE, message=FALSE}
+unscaled_preds <- list(
+    "Elastic Net" = tar_read(gem_elnet_preds), 
+    "MARS" = tar_read(gem_mars_preds), 
+    "XGBoost" = tar_read(gem_xgb_preds)
+)
+imap_dfr(unscaled_preds, 
+         ~ bind_rows(
+             roc_auc(.x, truth = cut, .pred_ideal), 
+             pr_auc(.x, truth = cut, .pred_ideal), 
+             gain_capture(.x, truth = cut, .pred_ideal)
+         ) %>% 
+             add_column(
+                 model = .y, 
+                 .before = 1L
+             ) %>% 
+             select(-.estimator)
+) %>% 
+    mutate(
+        across(
+            c(model, .metric), 
+            factor
+        )
+    ) %>% 
+    ggplot(aes(model, .estimate, colour = rev(.metric))) + 
+    geom_point() + 
+    labs(
+        title = "Model performance", 
+        subtitle = "Scores for simplest models within 1% of best overall", 
+        x = NULL, 
+        y = NULL, 
+        colour = NULL
+    )
+    
 ```
 

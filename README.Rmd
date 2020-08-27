@@ -1,0 +1,22 @@
+---
+title: "Testing `{targets}`"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    collapse = TRUE, 
+    fig.path = "man/figures/", 
+    echo = TRUE
+)
+```
+
+```{r load libraries, include=FALSE}
+library(targets)
+library(tarchetypes)
+# Using a separate packages script seems to work fine, as it did under drake
+source("packages.R")
+purrr::walk(list.files("R", full.names = TRUE), 
+            ~ source(.x))
+```
+

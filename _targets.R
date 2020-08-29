@@ -76,10 +76,6 @@ tar_pipeline(
     ),
     # build a MARS model
     tar_target(
-        gem_mars_rec,
-        create_mars_rec(gem_split)
-    ),
-    tar_target(
         gem_mars_mod,
         mars(
             mode = "classification",
@@ -92,7 +88,7 @@ tar_pipeline(
     ),
     tar_target(
         gem_mars_wfl,
-        workflow() %>% add_recipe(gem_mars_rec) %>% add_model(gem_mars_mod)
+        workflow() %>% add_recipe(gem_rec) %>% add_model(gem_mars_mod)
     ),
     tar_target(
         gem_mars_param,
@@ -100,7 +96,7 @@ tar_pipeline(
             parameters() %>%
             update(
                 num_terms = finalize(num_terms(),
-                                     gem_mars_rec %>%
+                                     gem_rec %>%
                                          prep() %>%
                                          juice())
             )
@@ -122,10 +118,6 @@ tar_pipeline(
     ), 
     # build an XGBoost model
     tar_target(
-        gem_xgb_rec,
-        create_xgb_rec(gem_split)
-    ),
-    tar_target(
         gem_xgb_mod,
         boost_tree(
             mode = "classification",
@@ -141,7 +133,7 @@ tar_pipeline(
     ),
     tar_target(
         gem_xgb_wfl,
-        workflow() %>% add_recipe(gem_xgb_rec) %>% add_model(gem_xgb_mod)
+        workflow() %>% add_recipe(gem_rec) %>% add_model(gem_xgb_mod)
     ),
     tar_target(
         gem_xgb_param,
@@ -151,11 +143,11 @@ tar_pipeline(
                 tree_depth = tree_depth(range = c(4, 10)), 
                 mtry = mtry(range = 
                                 c(
-                                    round((gem_xgb_rec %>% 
+                                    round((gem_rec %>% 
                                                prep() %>% 
                                                juice() %>% 
                                                ncol()) * 0.4), 
-                                    (gem_xgb_rec %>% 
+                                    (gem_rec %>% 
                                          prep() %>% 
                                          juice() %>% 
                                          ncol) - 1L

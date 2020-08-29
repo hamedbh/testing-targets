@@ -86,7 +86,7 @@ Gradient-boosted Decision Trees (XGBoost).
 
 ![](man/figures/model%20scores%20plot-1.png)<!-- -->
 
-The ranking of the models is that same by any of these metrics, and
+The ranking of the models is the same by any of these metrics, and that
 isn’t too surprising. We can also check how well the probabilities are
 calibrated in a couple of ways. Firstly by just calculating the [log
 loss](https://en.wikipedia.org/wiki/Cross_entropy#Cross-entropy_loss_function_and_logistic_regression)
@@ -302,3 +302,8 @@ can see this more clearly by pulling out just the Elastic Net model.
         ) 
 
 ![](man/figures/unnamed-chunk-9-1.png)<!-- -->
+
+We can see here that the elastic net model is failing to predict high
+probabilities at all. There may be nonlinearities in the predictors that
+it fails to detect, but which MARS and XGBoost can. That could be worth
+exploring further, but for now this is sufficient.

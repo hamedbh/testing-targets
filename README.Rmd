@@ -89,7 +89,7 @@ imap_dfr(unscaled_preds,
     
 ```
 
-The ranking of the models is that same by any of these metrics, and isn't too surprising. We can also check how well the probabilities are calibrated in a couple of ways. Firstly by just calculating the [log loss](https://en.wikipedia.org/wiki/Cross_entropy#Cross-entropy_loss_function_and_logistic_regression) or categorical cross-entropy for each model, and then plotting the curves and doing an eyeball test. 
+The ranking of the models is the same by any of these metrics, and that isn't too surprising. We can also check how well the probabilities are calibrated in a couple of ways. Firstly by just calculating the [log loss](https://en.wikipedia.org/wiki/Cross_entropy#Cross-entropy_loss_function_and_logistic_regression) or categorical cross-entropy for each model, and then plotting the curves and doing an eyeball test. 
 
 ```{r}
 imap_dfr(unscaled_preds, 
@@ -142,7 +142,7 @@ The MARS and XGBoost models track the ideal line rather well, while the Elastic 
 
 Now we can try scaling the probabilities generated on the test data using [Platt scaling](https://en.wikipedia.org/wiki/Platt_scaling) and [Isotonic regression](https://en.wikipedia.org/wiki/Isotonic_regression). The `calibrate_fit_platt()` and `calibrate_fit_iso()` functions do this from any table of predictions. The resulting object from those functions has a predict object that can be used on new data. See the script in this repo for more info. 
 
-```{r}
+```{r, warning=FALSE}
 pred_list <- c(
     unscaled_preds %>% 
         set_names(str_c("unscaled_", names(.))), 
@@ -281,3 +281,4 @@ scaling_plot_data %>%
     ) 
 ```
 
+We can see here that the elastic net model is failing to predict high probabilities at all. There may be nonlinearities in the predictors that it fails to detect, but which MARS and XGBoost can. That could be worth exploring further, but for now this is sufficient. 

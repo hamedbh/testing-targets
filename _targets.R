@@ -319,5 +319,9 @@ tar_pipeline(
             ), 
         pattern = map(iso_mods, unscaled_preds), 
         iteration = "list"
+    ), 
+    tar_render(
+        readme, 
+        "README.Rmd"
     )
 )

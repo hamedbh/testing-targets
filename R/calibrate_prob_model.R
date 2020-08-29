@@ -29,7 +29,7 @@ calibrate_prob_model <- function(pred_tbl,
                 {{ pred_col }}, 
                 {{ actual_col }}
             )
-    } else {
+    } else if(method == "isotonic") {
         levs <- pred_tbl %>% pull({{ actual_col }}) %>% levels()
         preds <- pred_tbl %>% pull({{ pred_col }})
         truth <- as.integer(pred_tbl %>% pull({{ actual_col }}) == levs[1])
@@ -46,5 +46,7 @@ calibrate_prob_model <- function(pred_tbl,
                            {{ actual_col }}), 
                 by = ".row"
             )
+    } else {
+        stop("method not recognised")
     }
 }

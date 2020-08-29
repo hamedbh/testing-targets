@@ -1,3 +1,24 @@
+#' Create model to calibrate probabilities with isotonic regression
+#' 
+#' The creates an object that can be used to calibrate probabilities. The most 
+#' common use case will be to provide a set of probability predictions 
+#' from model training with the correct labels to this function. Then that 
+#' output can be used to calibrate the probabilities generated on test data. 
+#'
+#' @param pred_tbl A tibble of predictions, such as that created by 
+#'     \code{tune::collect_predictions()}
+#' @param pred_col Unquoted name of the column containing the probability 
+#'     predictions. 
+#' @param truth_col Unquoted name of the column containing the correct outcome 
+#'     labels. Must be a factor. 
+#' @param truth_val If left as \code{NULL}, the default, this will be the first 
+#'     level of \code{truth_col}. If supplied it must be a string corresponding 
+#'     to the positive level of \code{truth_col}. 
+#'
+#' @return An object of class \code{iso_fit}, which can then be used in 
+#'     \code{predict()} to calibrate predictions.
+#' @export
+
 calibrate_fit_iso <- function(pred_tbl, 
                               pred_col, 
                               truth_col, 
@@ -33,6 +54,16 @@ calibrate_fit_iso <- function(pred_tbl,
     class(res) <- c(class(res), "iso_fit")
     res
 }
+
+#' Isotonic model predictions
+#'
+#' @param object An object of class \code{iso_fit}
+#' @param new_data A tibble
+#' @param ... Not used: given here to give users informative errors if they 
+#'     pass extra parameters. 
+#'
+#' @return A tibble of calibrated probability predictions
+#' @export
 
 predict.iso_fit <- function(object,
                             new_data, 

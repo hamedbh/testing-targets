@@ -286,3 +286,8 @@ We can see here that the elastic net model is failing to predict high probabilit
 ## Feature selection with Boruta
 
 Something else we can test is whether the models perform better after some feature selection, using the [Boruta package](https://cran.r-project.org/package=Boruta). 
+
+```{r}
+tar_load(boruta_res)
+```
+

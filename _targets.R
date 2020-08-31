@@ -319,5 +319,17 @@ tar_pipeline(
             ), 
         pattern = map(iso_mods, unscaled_preds), 
         iteration = "list"
+    ), 
+    
+    # Variable selection steps with Boruta
+    tar_target(
+        boruta_res, 
+        Boruta(x = gem_split %>% 
+                   training() %>% 
+                   select(-cut), 
+               y = gem_split %>% 
+                   training() %>% 
+                   pull(cut),
+               getImp = getImpFerns)
     )
 )

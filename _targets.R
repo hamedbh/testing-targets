@@ -1,7 +1,7 @@
 library(targets)
 library(tarchetypes)
 # Using a separate packages script seems to work fine, as it did under drake
-tar_option_set(packages = c("tidyverse", "tidymodels"))
+tar_option_set(packages = c("tidyverse", "tidymodels", "Boruta"))
 purrr::walk(list.files("R", full.names = TRUE), 
             ~ source(.x))
 options(tidymodels.dark = TRUE)

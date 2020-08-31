@@ -282,3 +282,7 @@ scaling_plot_data %>%
 ```
 
 We can see here that the elastic net model is failing to predict high probabilities at all. There may be nonlinearities in the predictors that it fails to detect, but which MARS and XGBoost can. That could be worth exploring further, but for now this is sufficient. 
+
+## Feature selection with Boruta
+
+Something else we can test is whether the models perform better after some feature selection, using the [Boruta package](https://cran.r-project.org/package=Boruta). 
